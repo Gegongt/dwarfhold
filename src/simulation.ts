@@ -13,7 +13,12 @@ export function advanceDay(state: ColonyState): ColonyState {
     const output = production[dwarf.assignment];
 
     Object.entries(output).forEach(([resource, amount]) => {
-      resources[resource as keyof Resources] += amount ?? 0;
+      // D2: Equipped tools add one extra resource
+      // when the dwarf performs a local job.
+      const bonus =
+        dwarf.equippedTool && dwarf.status === "working" ? 1 : 0;
+
+      resources[resource as keyof Resources] += (amount ?? 0) + bonus;
     });
 
   });
