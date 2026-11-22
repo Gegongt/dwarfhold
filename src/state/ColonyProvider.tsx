@@ -16,6 +16,7 @@ const initialState: ColonyState = {
     stone: 9,
     food: 18,
     tools: 1,
+    weapons: 0,
   },
   dwarves: [
     {
@@ -26,6 +27,7 @@ const initialState: ColonyState = {
       assignment: "mining",
       status: "working",
       specialty: "mining",
+      equippedTool: false,
     },
     {
       id: "dwarf-2",
@@ -35,6 +37,7 @@ const initialState: ColonyState = {
       assignment: "woodcutting",
       status: "working",
       specialty: "woodcutting",
+      equippedTool: false,
     },
     {
       id: "dwarf-3",
@@ -43,6 +46,7 @@ const initialState: ColonyState = {
       icon: "🧔🏽",
       assignment: null,
       status: "idle",
+      equippedTool: false,
     },
   ],
 };
@@ -97,17 +101,71 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
     );
   }
 
+ // D2: Equip one available tool.
+  function equipTool(id: string) {
+  setColony((current) => {
+    const dwarf = current.dwarves.find((item) => item.id === id);
+
+    if (
+      !dwarf ||
+      dwarf.equippedTool ||
+      dwarf.status === "expedition" ||
+      current.resources.tools < 1
+    ) {
+      return current;
+    }
+
+    return {
+      ...current,
+      resources: {
+        ...current.resources,
+        tools: current.resources.tools - 1,
+      },
+      dwarves: current.dwarves.map((item) =>
+        item.id === id ? { ...item, equippedTool: true } : item,
+      ),
+    };
+  });
+}
+
+  // D2: Return the equipped tool to inventory.
+  function unequipTool(id: string) {
+  setColony((current) => {
+    const dwarf = current.dwarves.find((item) => item.id === id);
+
+    if (
+      !dwarf ||
+      !dwarf.equippedTool ||
+      dwarf.status === "expedition"
+    ) {
+      return current;
+    }
+
+    return {
+      ...current,
+      resources: {
+        ...current.resources,
+        tools: current.resources.tools + 1,
+      },
+      dwarves: current.dwarves.map((item) =>
+        item.id === id ? { ...item, equippedTool: false } : item,
+      ),
+    };
+  });
+}
+
   function craftTool() {
-    if (colony.resources.wood < 3) {
+    if (colony.resources.wood < 3 || colony.resources.stone < 2) {
       setActivities((current) => [
         {
           id: crypto.randomUUID(),
           day: colony.day,
-          message: "The forge needs more timber.",
+          message: "Not enough wood or stone to forge to tool.",
           tone: "warning" as const,
         },
         ...current,
-      ]);
+      ].slice(0, 6)
+    );
       return;
     }
 
@@ -126,6 +184,46 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
           id: crypto.randomUUID(),
           day: colony.day,
           message: "A sturdy iron tool joins the stores.",
+          tone: "good" as const,
+        },
+        ...current,
+      ].slice(0, 6),
+    );
+  }
+
+// D2: Weapon recipe costs 4 wood and 3 stone.
+  function craftWeapon() {
+    if (colony.resources.wood < 4 || colony.resources.stone < 3) {
+      setActivities((current) =>
+        [
+          {
+            id: crypto.randomUUID(),
+            day: colony.day,
+            message: "Not enough wood or stone to forge a weapon.",
+            tone: "warning" as const,
+          },
+          ...current,
+        ].slice(0, 6),
+      );
+      return;
+    }
+
+    setColony((current) => ({
+      ...current,
+      resources: {
+        ...current.resources,
+        wood: current.resources.wood - 4,
+        stone: current.resources.stone - 3,
+        weapons: current.resources.weapons + 1,
+      },
+    }));
+
+    setActivities((current) =>
+      [
+        {
+          id: crypto.randomUUID(),
+          day: colony.day,
+          message: "A weapon was forged for Stonehome's defense.",
           tone: "good" as const,
         },
         ...current,
@@ -212,6 +310,9 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
     expeditionPending,
     togglePaused: () => setPaused((value) => !value),
     assignDwarf,
+    equipTool,
+    unequipTool,
+    craftWeapon,
     craftTool,
     sendExpedition,
   };
