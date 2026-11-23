@@ -26,7 +26,8 @@ export interface Dwarf {
 export interface ColonyState { 
     day: number; 
     resources: Resources; 
-    dwarves: Dwarf[] 
+    dwarves: Dwarf[];
+    foodShortage: boolean;
 }
 
 export interface ExpeditionResult {     

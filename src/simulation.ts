@@ -8,24 +8,37 @@ export function advanceDay(state: ColonyState): ColonyState {
   const resources = { ...state.resources };
 
   state.dwarves.forEach((dwarf) => {
+    if (dwarf.status !== "working") return;
     if (!dwarf.assignment) return;
 
     const output = production[dwarf.assignment];
 
     Object.entries(output).forEach(([resource, amount]) => {
+      let produced = amount ?? 0;
+      
+      // D1: Reduce production during food shortage.
+      if (state.foodShortage && dwarf.assignment !== "farming"){
+        produced = Math.floor(produced / 2);
+      }
+      
       // D2: Equipped tools add one extra resource
       // when the dwarf performs a local job.
       const bonus =
         dwarf.equippedTool && dwarf.status === "working" ? 1 : 0;
 
-      resources[resource as keyof Resources] += (amount ?? 0) + bonus;
+      resources[resource as keyof Resources] += produced + bonus;
     });
 
   });
 
-  resources.food = Math.max(0, resources.food - state.dwarves.length);
+  const requiredFood = state.dwarves.filter(
+    (dwarf) => dwarf.status === "working"
+  ).length;
+  const foodShortage = resources.food < requiredFood;
 
-  return { ...state, day: state.day + 1, resources };
+  resources.food = Math.max(0, resources.food - requiredFood);
+
+  return { ...state, day: state.day + 1, resources, foodShortage };
 }
 
 export const jobLabel = (job: JobType) => job ? ({ 
