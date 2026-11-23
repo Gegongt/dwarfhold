@@ -15,12 +15,18 @@ export function advanceDay(state: ColonyState): ColonyState {
 
     Object.entries(output).forEach(([resource, amount]) => {
       let produced = amount ?? 0;
-
+      
+      // D1: Reduce production during food shortage.
       if (state.foodShortage && dwarf.assignment !== "farming"){
         produced = Math.floor(produced / 2);
       }
+      
+      // D2: Equipped tools add one extra resource
+      // when the dwarf performs a local job.
+      const bonus =
+        dwarf.equippedTool && dwarf.status === "working" ? 1 : 0;
 
-      resources[resource as keyof Resources] += produced;
+      resources[resource as keyof Resources] += produced + bonus;
     });
 
   });

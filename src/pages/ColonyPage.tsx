@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Chronicle } from "../components/Chronicle";
 import { DwarfRoster } from "../components/DwarfRoster";
@@ -11,8 +12,11 @@ export function ColonyPage() {
     activities,
     expeditionPending,
     assignDwarf,
+    equipTool,
+    unequipTool,
     sendExpedition,
   } = useColony();
+
   const [destination, setDestination] = useState("crystal-cave");
   const [expeditionDwarf, setExpeditionDwarf] = useState("dwarf-3");
 
@@ -24,16 +28,23 @@ export function ColonyPage() {
     (total, dwarf) => {
       if (dwarf.status === "working" && dwarf.assignment) {
         const output = production[dwarf.assignment];
+
         Object.entries(output).forEach(([resource, amount]) => {
           let produced = amount ?? 0;
-
+          
+          // D1: Reduce production during food shortage.
           if (colony.foodShortage && dwarf.assignment !== "farming") {
             produced = Math.floor(produced / 2);
           }
+          
+          // D2: Include equipped tool bonus in the ledger.
+          const bonus =
+            dwarf.equippedTool && dwarf.status === "working" ? 1 : 0;
 
-          total[resource as ResourceKey] += produced;
+          total[resource as ResourceKey] += produced + bonus;
         });
       }
+
       return total;
     },
     {
@@ -41,12 +52,19 @@ export function ColonyPage() {
       stone: 0,
       food: -workingCount,
       tools: 0,
+      weapons: 0,
     },
   );
 
   return (
     <div className="dashboard">
-      <DwarfRoster dwarves={colony.dwarves} onAssign={assignDwarf} />
+      <DwarfRoster
+        dwarves={colony.dwarves}
+        availableTools={colony.resources.tools}
+        onAssign={assignDwarf}
+        onEquip={equipTool}
+        onUnequip={unequipTool}
+      />
 
       <section className="center-stack">
         <section className="panel production">
@@ -87,7 +105,19 @@ export function ColonyPage() {
                   }{" "}
                   assigned
                 </p>
-                <strong>+{Object.values(production[job])[0]} / day</strong>
+                <strong>+{Object.values(production[job])[0]} / day base</strong>
+                <p>
+                  Tool bonus: +
+                  {
+                    colony.dwarves.filter(
+                      (dwarf) =>
+                        dwarf.assignment === job &&
+                        dwarf.status === "working" &&
+                        dwarf.equippedTool,
+                    ).length
+                  }{" "}
+                  / day
+                </p>
               </article>
             ))}
           </div>

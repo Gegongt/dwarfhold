@@ -6,9 +6,19 @@ export interface ColonyContextValue {
   paused: boolean;
   activities: Activity[];
   expeditionPending: boolean;
+
   togglePaused: () => void;
   assignDwarf: (id: string, assignment: JobType) => void;
+  
+  //D2: equipment actions
+  equipTool: (dwarfId: string) => void;
+  unequipTool: (dwarfId: string) => void;
+ 
   craftTool: () => void;
+
+  //D2: wepon crafting
+  craftWeapon: () => void;
+
   sendExpedition: (dwarfId: string, destination: string) => Promise<void>;
 }
 
