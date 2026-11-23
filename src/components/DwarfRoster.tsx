@@ -80,6 +80,7 @@ export function DwarfRoster({ dwarves, availableTools, onAssign, onEquip, onUneq
 
                 {/* D2: Equip or return a tool */}
                 <button
+                  className="tool-button"
                   type="button"
                   disabled={
                     isAway ||
