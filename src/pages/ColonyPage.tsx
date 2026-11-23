@@ -16,12 +16,22 @@ export function ColonyPage() {
   const [destination, setDestination] = useState("crystal-cave");
   const [expeditionDwarf, setExpeditionDwarf] = useState("dwarf-3");
 
+  const workingCount = colony.dwarves.filter(
+    (dwarf) => dwarf.status === "working"
+  ).length;
+
   const dailyOutput = colony.dwarves.reduce<Record<ResourceKey, number>>(
     (total, dwarf) => {
-      if (dwarf.assignment) {
+      if (dwarf.status === "working" && dwarf.assignment) {
         const output = production[dwarf.assignment];
         Object.entries(output).forEach(([resource, amount]) => {
-          total[resource as ResourceKey] += amount ?? 0;
+          let produced = amount ?? 0;
+
+          if (colony.foodShortage && dwarf.assignment !== "farming") {
+            produced = Math.floor(produced / 2);
+          }
+
+          total[resource as ResourceKey] += produced;
         });
       }
       return total;
@@ -29,7 +39,7 @@ export function ColonyPage() {
     {
       wood: 0,
       stone: 0,
-      food: -colony.dwarves.length,
+      food: -workingCount,
       tools: 0,
     },
   );
@@ -48,7 +58,15 @@ export function ColonyPage() {
             <span>updates each day</span>
           </header>
 
+          {colony.foodShortage && (
+              <p role="alert" className="shortage-warning">
+                  ⚠ Food shortage! Woodcutting and Mining
+                  production is reduced by 50% (rounded down).
+                  Assign workers to Farming to recover.
+              </p>
+          )}
           <div className="job-grid">
+            
             {(["woodcutting", "mining", "farming"] as const).map((job) => (
               <article key={job}>
                 <b>
@@ -62,7 +80,9 @@ export function ColonyPage() {
                 <p>
                   {
                     colony.dwarves.filter(
-                      (dwarf) => dwarf.assignment === job,
+                      (dwarf) => 
+                        dwarf.status === "working" &&
+                        dwarf.assignment === job,
                     ).length
                   }{" "}
                   assigned
