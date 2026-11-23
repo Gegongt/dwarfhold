@@ -1,6 +1,12 @@
 export type ResourceKey = "wood" | "stone" | "food" | "tools" | "weapons";
 export type JobType = "woodcutting" | "mining" | "farming" | null;
-export type DwarfStatus = "idle" | "working" | "expedition";
+export type DwarfStatus = "idle" | "working" | "expedition" | "crafting";
+
+// D3: Information about an ongoing crafting task.
+export interface CraftingTask {
+    item: "tools" | "weapons";
+    completesOnDay: number;
+}
 
 export interface Resources { 
     wood: number; 
@@ -21,6 +27,9 @@ export interface Dwarf {
 
      //D2: a dwarf can carry at most one tool
      equippedTool?: boolean; 
+
+    // D3: Current crafting task.
+    crafting?: CraftingTask;
 }
 
 export interface ColonyState { 

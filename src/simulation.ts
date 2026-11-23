@@ -38,7 +38,28 @@ export function advanceDay(state: ColonyState): ColonyState {
 
   resources.food = Math.max(0, resources.food - requiredFood);
 
-  return { ...state, day: state.day + 1, resources, foodShortage };
+  // D3: Complete crafting tasks when the next day is reached.
+const nextDay = state.day + 1;
+
+const dwarves = state.dwarves.map((dwarf) => {
+  if (
+    dwarf.status === "crafting" &&
+    dwarf.crafting &&
+    nextDay >= dwarf.crafting.completesOnDay
+  ) {
+    resources[dwarf.crafting.item] += 1;
+
+    return {
+      ...dwarf,
+      status: dwarf.assignment ? "working" as const : "idle" as const,
+      crafting: undefined,
+    };
+  }
+
+  return dwarf;
+});
+
+return { ...state, day: nextDay, resources, dwarves, foodShortage };
 }
 
 export const jobLabel = (job: JobType) => job ? ({ 
