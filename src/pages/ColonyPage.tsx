@@ -150,6 +150,10 @@ export function ColonyPage() {
             >
               {colony.dwarves.map((dwarf) => (
                 <option key={dwarf.id} value={dwarf.id}>
+                  disabled={
+                  dwarf.status !== "idle" &&
+                  dwarf.status !== "working"
+                }
                   {dwarf.name}
                 </option>
               ))}
@@ -169,7 +173,15 @@ export function ColonyPage() {
           </label>
 
           <button
-            disabled={expeditionPending}
+            disabled={
+              expeditionPending ||
+                !colony.dwarves.some(
+               (dwarf) =>
+                dwarf.id === expeditionDwarf &&
+                  (dwarf.status === "idle" ||
+           dwarf.status === "working")
+  )
+}
             onClick={() => sendExpedition(expeditionDwarf, destination)}
           >
             {expeditionPending ? "Beyond the gate…" : "Send expedition"}
