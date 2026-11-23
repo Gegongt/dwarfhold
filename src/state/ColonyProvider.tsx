@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { beginExpedition } from "../api";
 import { advanceDay, jobLabel } from "../simulation";
 import type {
@@ -56,6 +56,8 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
   const [colony, setColony] = useState(initialState);
   const [paused, setPaused] = useState(false);
   const [expeditionPending, setExpeditionPending] = useState(false);
+  //D4: prevent multiple expeditions from being initiated simultaneously
+  const expeditionLock = useRef(false);
   const [activities, setActivities] = useState<Activity[]>([
     {
       id: "welcome",
@@ -233,9 +235,13 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
   }
 
   async function sendExpedition(dwarfId: string, destination: string) {
-    const dwarf = colony.dwarves.find((item) => item.id === dwarfId);
-    if (!dwarf) return;
+    //D4: prevent multiple expeditions from being initiated simultaneously
+    if (expeditionLock.current) return;
 
+    const dwarf = colony.dwarves.find((item) => item.id === dwarfId);
+    if (!dwarf || ((dwarf.status !== "working" && dwarf.status !== "idle"))) return; //D4 prevent starting an expedition with a dwarf not available
+
+    expeditionLock.current = true;
     setExpeditionPending(true);
     setColony((current) => ({
       ...current,
@@ -285,6 +291,7 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
         ].slice(0, 6),
       );
     } catch (error) {
+      // D4: prevent the colony from being left without the dwarf if the expedition fails
       setColony((current) => ({
           ...current,
           dwarves: current.dwarves.map((item) =>
@@ -312,6 +319,7 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
       );
     }
 
+    expeditionLock.current = false; //D4: release the expedition lock after the expedition concludes
     setExpeditionPending(false);
   }
 
