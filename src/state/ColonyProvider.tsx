@@ -3,6 +3,7 @@ import { beginExpedition } from "../api";
 import { advanceDay, jobLabel } from "../simulation";
 import { resolveRaid } from "../raid";
 import { ghoul } from "../ghoul";
+import { loadColony, saveColony } from "../persistence";
 import type {
   Activity,
   ColonistStatus,
@@ -59,7 +60,8 @@ const initialState: ColonyState = {
 };
 
 export function ColonyProvider({ children }: { children: ReactNode }) {
-  const [colony, setColony] = useState(initialState);
+  // D5: Restore the saved colony when the game starts.
+  const [colony, setColony] = useState(() => loadColony(initialState));
   const [paused, setPaused] = useState(false);
   const [expeditionPending, setExpeditionPending] = useState(false);
   //D4: prevent multiple expeditions from being initiated simultaneously
@@ -82,6 +84,11 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
 
     return () => window.clearInterval(timer);
   }, [paused]);
+
+  // D5: Automatically save whenever the colony state changes.
+    useEffect(() => {
+      saveColony(colony);
+    }, [colony]);
 
   function assignColonist(id: string, assignment: JobType) {
     // D3: Busy dwarves cannot change their assignment.
