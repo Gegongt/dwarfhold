@@ -1,6 +1,7 @@
 export type ResourceKey = "wood" | "stone" | "food" | "tools" | "weapons";
 export type JobType = "woodcutting" | "mining" | "farming" | null;
-export type DwarfStatus = "idle" | "working" | "expedition" | "crafting";
+export type ColonistStatus = "idle" | "working" | "expedition" | "crafting";
+export type Species = "dwarf" | "ghoul";
 
 // D3: Information about an ongoing crafting task.
 export interface CraftingTask {
@@ -16,13 +17,15 @@ export interface Resources {
     weapons: number;
 }
 
-export interface Dwarf { 
+export interface Colonist  { 
     id: string;
      name: string; 
      title: string; 
      icon: string; 
+     //D6: Which species does the colonist belong to ?
+     species: Species;
      assignment: JobType; 
-     status: DwarfStatus; 
+     status: ColonistStatus; 
      specialty?: Exclude<JobType, null> 
 
      //D2: a dwarf can carry at most one tool
@@ -35,7 +38,7 @@ export interface Dwarf {
 export interface ColonyState { 
     day: number; 
     resources: Resources; 
-    dwarves: Dwarf[];
+    colonists: Colonist[];
     foodShortage: boolean;
     lastRaid?: RaidReport;
 }

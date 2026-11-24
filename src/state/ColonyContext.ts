@@ -8,17 +8,17 @@ export interface ColonyContextValue {
   expeditionPending: boolean;
 
   togglePaused: () => void;
-  assignDwarf: (id: string, assignment: JobType) => void;
+  assignColonist: (id: string, assignment: JobType) => void;
   
   //D2: equipment actions
-  equipTool: (dwarfId: string) => void;
-  unequipTool: (dwarfId: string) => void;
+  equipTool: (colonistId: string) => void;
+  unequipTool: (colonistId: string) => void;
  
   // D3: Crafting requires a selected dwarf.
-  craftTool: (dwarfId: string) => void;
-  craftWeapon: (dwarfId: string) => void;
+  craftTool: (colonistId: string) => void;
+  craftWeapon: (colonistId: string) => void;
 
-  sendExpedition: (dwarfId: string, destination: string) => Promise<void>;
+  sendExpedition: (colonistId: string, destination: string) => Promise<void>;
 }
 
 export const ColonyContext = createContext<ColonyContextValue | null>(null);

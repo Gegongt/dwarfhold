@@ -2,8 +2,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { beginExpedition } from "../api";
 import { advanceDay, jobLabel } from "../simulation";
 import { resolveRaid } from "../raid";
+import { ghoul } from "../ghoul";
 import type {
   Activity,
+  ColonistStatus,
   ColonyState,
   JobType,
   ResourceKey,
@@ -19,12 +21,13 @@ const initialState: ColonyState = {
     tools: 1,
     weapons: 0,
   },
-  dwarves: [
+  colonists: [
     {
       id: "dwarf-1",
       name: "Bromli Copperkeg",
       title: "Hold Warden",
       icon: "🧔🏻",
+      species: "dwarf",
       assignment: "mining",
       status: "working",
       specialty: "mining",
@@ -35,6 +38,7 @@ const initialState: ColonyState = {
       name: "Yrsa Flintbraid",
       title: "Trail Scout",
       icon: "🧔🏼‍♀️",
+      species: "dwarf",
       assignment: "woodcutting",
       status: "working",
       specialty: "woodcutting",
@@ -45,6 +49,7 @@ const initialState: ColonyState = {
       name: "Dori Ashmantle",
       title: "Stone Singer",
       icon: "🧔🏽",
+      species: "dwarf",
       assignment: null,
       status: "idle",
       equippedTool: false,
@@ -78,39 +83,39 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(timer);
   }, [paused]);
 
-  function assignDwarf(id: string, assignment: JobType) {
+  function assignColonist(id: string, assignment: JobType) {
     // D3: Busy dwarves cannot change their assignment.
-const selectedDwarf = colony.dwarves.find(
-  (dwarf) => dwarf.id === id
+const selectedColonist = colony.colonists.find(
+  (colonist) => colonist.id === id
 );
 
 if (
-  !selectedDwarf ||
-  selectedDwarf.status === "crafting" ||
-  selectedDwarf.status === "expedition"
+  !selectedColonist ||
+  selectedColonist.status === "crafting" ||
+  selectedColonist.status === "expedition"
 ) {
   return;
 }
     setColony((current) => ({
       ...current,
-      dwarves: current.dwarves.map((dwarf) =>
-        dwarf.id === id
+      colonists: current.colonists.map((colonist) =>
+        colonist.id === id
           ? {
-              ...dwarf,
+              ...colonist,
               assignment,
               status: assignment ? "working" : "idle",
             }
-          : dwarf,
+          : colonist,
       ),
     }));
 
-    const dwarf = colony.dwarves.find((item) => item.id === id);
+    const colonist = colony.colonists.find((item) => item.id === id);
     setActivities((current) =>
       [
         {
           id: crypto.randomUUID(),
           day: colony.day,
-          message: `${dwarf?.name ?? "A dwarf"} assigned to ${jobLabel(assignment)}.`,
+          message: `${colonist?.name ?? "A colonist"} assigned to ${jobLabel(assignment)}.`,
         },
         ...current,
       ].slice(0, 6),
@@ -120,13 +125,13 @@ if (
  // D2: Equip one available tool.
   function equipTool(id: string) {
   setColony((current) => {
-    const dwarf = current.dwarves.find((item) => item.id === id);
+    const colonist = current.colonists.find((item) => item.id === id);
 
     if (
-      !dwarf ||
-      dwarf.equippedTool ||
-      dwarf.status === "expedition" ||
-      dwarf.status === "crafting" ||
+      !colonist ||
+      colonist.equippedTool ||
+      colonist.status === "expedition" ||
+      colonist.status === "crafting" ||
       current.resources.tools < 1
     ) {
       return current;
@@ -138,7 +143,7 @@ if (
         ...current.resources,
         tools: current.resources.tools - 1,
       },
-      dwarves: current.dwarves.map((item) =>
+      colonists: current.colonists.map((item) =>
         item.id === id ? { ...item, equippedTool: true } : item,
       ),
     };
@@ -148,12 +153,12 @@ if (
   // D2: Return the equipped tool to inventory.
   function unequipTool(id: string) {
   setColony((current) => {
-    const dwarf = current.dwarves.find((item) => item.id === id);
+    const colonist = current.colonists.find((item) => item.id === id);
 
     if (
-      !dwarf ||
-      !dwarf.equippedTool ||
-      dwarf.status === "expedition"
+      !colonist ||
+      !colonist.equippedTool ||
+      colonist.status === "expedition"
     ) {
       return current;
     }
@@ -164,7 +169,7 @@ if (
         ...current.resources,
         tools: current.resources.tools + 1,
       },
-      dwarves: current.dwarves.map((item) =>
+      colonists: current.colonists.map((item) =>
         item.id === id ? { ...item, equippedTool: false } : item,
       ),
     };
@@ -173,21 +178,22 @@ if (
 
  // D3: Start crafting with an eligible dwarf.
 function startCrafting(
-  dwarfId: string,
+  colonistId: string,
   item: "tools" | "weapons"
 ) {
   const woodCost = item === "tools" ? 3 : 4;
   const stoneCost = item === "tools" ? 2 : 3;
 
   setColony((current) => {
-    const dwarf = current.dwarves.find(
-      (item) => item.id === dwarfId
+    const colonist = current.colonists.find(
+      (item) => item.id === colonistId
     );
 
     // D3: Invalid attempts must not change the state.
     if (
-      !dwarf ||
-      (dwarf.status !== "idle" && dwarf.status !== "working") ||
+      !colonist ||
+      (colonist.status !== "idle" && colonist.status !== "working") ||
+      (colonist.species === "ghoul" && item === "weapons") ||
       current.resources.wood < woodCost ||
       current.resources.stone < stoneCost
     ) {
@@ -201,56 +207,56 @@ function startCrafting(
         wood: current.resources.wood - woodCost,
         stone: current.resources.stone - stoneCost,
       },
-      dwarves: current.dwarves.map((dwarf) =>
-        dwarf.id === dwarfId
+      colonists: current.colonists.map((colonist) =>
+        colonist.id === colonistId
           ? {
-              ...dwarf,
+              ...colonist,
               status: "crafting",
               crafting: {
                 item,
                 completesOnDay: current.day + 1,
               },
             }
-          : dwarf
+          : colonist
       ),
     };
   });
 }
 
-function craftTool(dwarfId: string) {
-  startCrafting(dwarfId, "tools");
+function craftTool(colonistId: string) {
+  startCrafting(colonistId, "tools");
 }
 
-function craftWeapon(dwarfId: string) {
-  startCrafting(dwarfId, "weapons");
+function craftWeapon(colonistId: string) {
+  startCrafting(colonistId, "weapons");
 }
   
-  async function sendExpedition(dwarfId: string, destination: string) {
+  async function sendExpedition(colonistId: string, destination: string) {
     //D4: prevent multiple expeditions from being initiated simultaneously
     if (expeditionLock.current) return;
 
-    const dwarf = colony.dwarves.find((item) => item.id === dwarfId);
-    if (!dwarf || ((dwarf.status !== "working" && dwarf.status !== "idle"))) return; //D4 prevent starting an expedition with a dwarf not available
+    const colonist = colony.colonists.find((item) => item.id === colonistId);
+    if (!colonist || ((colonist.status !== "working" && colonist.status !== "idle"))) return; //D4 prevent starting an expedition with a dwarf not available
 
     expeditionLock.current = true;
     setExpeditionPending(true);
     setColony((current) => ({
       ...current,
-      dwarves: current.dwarves.map((item) =>
-        item.id === dwarf.id ? { ...item, status: "expedition" } : item,
+      colonists: current.colonists.map((item) =>
+        item.id === colonist.id ? { ...item, status: "expedition" } : item,
       ),
     }));
     setActivities((current) => [
       {
         id: crypto.randomUUID(),
         day: colony.day,
-        message: `${dwarf.name} departed for ${destination.replace("-", " ")}.`,
+        message: `${colonist.name} departed for ${destination.replace("-", " ")}.`,
       },
       ...current,
     ]);
 
     try {
-      const result = await beginExpedition(dwarf.id, destination);
+      const result = await beginExpedition(colonist.id, destination);
 
       const raidRoll =
         destination === "bombo-rift"
@@ -273,18 +279,26 @@ function craftWeapon(dwarfId: string) {
             ? resolveRaid(rewardedResources, raidRoll)
             : null;
 
+        // D6: Check whether the Ghoul should be recruited.
+        const recruitGhoul =
+          destination === "crystal-cave" &&
+          !current.colonists.some((item) => item.id === ghoul.id);
+
         return {
           ...current,
           resources: raid ? raid.resources : rewardedResources,
           lastRaid: raid ? raid.report : current.lastRaid,
-          dwarves: current.dwarves.map((item) =>
-            item.id === dwarf.id
-              ? {
-                  ...item,
-                  status: item.assignment ? "working" : "idle",
-                }
-              : item,
+          colonists: [
+            ...current.colonists.map((item) =>
+              item.id === colonist.id
+                ? {
+                    ...item,
+                    status: (item.assignment ? "working" : "idle") as ColonistStatus,
+                  }
+                : item,
           ),
+          ...(recruitGhoul ? [{ ...ghoul }] : []),
+          ],
         };
       });
       setActivities((current) =>
@@ -302,8 +316,8 @@ function craftWeapon(dwarfId: string) {
       // D4: prevent the colony from being left without the dwarf if the expedition fails
       setColony((current) => ({
           ...current,
-          dwarves: current.dwarves.map((item) =>
-              item.id === dwarf.id
+          colonists: current.colonists.map((item) =>
+              item.id === colonist.id
                   ? {
                         ...item,
                         status: item.assignment ? "working" : "idle",
@@ -337,7 +351,7 @@ function craftWeapon(dwarfId: string) {
     activities,
     expeditionPending,
     togglePaused: () => setPaused((value) => !value),
-    assignDwarf,
+    assignColonist,
     equipTool,
     unequipTool,
     craftWeapon,

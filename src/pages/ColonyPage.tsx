@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Chronicle } from "../components/Chronicle";
-import { DwarfRoster } from "../components/DwarfRoster";
+import { ColonistRoster } from "../components/ColonistRoster";
 import { jobLabel, production } from "../simulation";
 import { useColony } from "../state/ColonyContext";
 import { getDefenseChance } from "../raid";
@@ -12,35 +12,40 @@ export function ColonyPage() {
     colony,
     activities,
     expeditionPending,
-    assignDwarf,
+    assignColonist,
     equipTool,
     unequipTool,
     sendExpedition,
   } = useColony();
 
   const [destination, setDestination] = useState("crystal-cave");
-  const [expeditionDwarf, setExpeditionDwarf] = useState("dwarf-3");
+  const [expeditionColonist, setExpeditionColonist] = useState("dwarf-3");
 
-  const workingCount = colony.dwarves.filter(
-    (dwarf) => dwarf.status === "working"
+  const workingCount = colony.colonists.filter(
+    (colonist) => colonist.status === "working"
   ).length;
 
-  const dailyOutput = colony.dwarves.reduce<Record<ResourceKey, number>>(
-    (total, dwarf) => {
-      if (dwarf.status === "working" && dwarf.assignment) {
-        const output = production[dwarf.assignment];
+  const dailyOutput = colony.colonists.reduce<Record<ResourceKey, number>>(
+    (total, colonist) => {
+      if (colonist.status === "working" && colonist.assignment) {
+        const output = production[colonist.assignment];
 
         Object.entries(output).forEach(([resource, amount]) => {
           let produced = amount ?? 0;
           
           // D1: Reduce production during food shortage.
-          if (colony.foodShortage && dwarf.assignment !== "farming") {
+          if (colony.foodShortage && colonist.assignment !== "farming") {
             produced = Math.floor(produced / 2);
+          }
+
+          // D6: Include Ghoul farming bonus in the Shift Ledger.
+          if (colonist.species === "ghoul" && colonist.assignment === "farming") {
+            produced += 2;
           }
           
           // D2: Include equipped tool bonus in the ledger.
           const bonus =
-            dwarf.equippedTool && dwarf.status === "working" ? 1 : 0;
+            colonist.equippedTool && colonist.status === "working" ? 1 : 0;
 
           total[resource as ResourceKey] += produced + bonus;
         });
@@ -59,10 +64,10 @@ export function ColonyPage() {
 
   return (
     <div className="dashboard">
-      <DwarfRoster
-        dwarves={colony.dwarves}
+      <ColonistRoster
+        colonists={colony.colonists}
         availableTools={colony.resources.tools}
-        onAssign={assignDwarf}
+        onAssign={assignColonist}
         onEquip={equipTool}
         onUnequip={unequipTool}
       />
@@ -98,10 +103,10 @@ export function ColonyPage() {
                 <h3>{jobLabel(job)}</h3>
                 <p>
                   {
-                    colony.dwarves.filter(
-                      (dwarf) => 
-                        dwarf.status === "working" &&
-                        dwarf.assignment === job,
+                    colony.colonists.filter(
+                      (colonist) => 
+                        colonist.status === "working" &&
+                        colonist.assignment === job,
                     ).length
                   }{" "}
                   assigned
@@ -110,11 +115,11 @@ export function ColonyPage() {
                 <p>
                   Tool bonus: +
                   {
-                    colony.dwarves.filter(
-                      (dwarf) =>
-                        dwarf.assignment === job &&
-                        dwarf.status === "working" &&
-                        dwarf.equippedTool,
+                    colony.colonists.filter(
+                      (colonist) =>
+                        colonist.assignment === job &&
+                        colonist.status === "working" &&
+                        colonist.equippedTool,
                     ).length
                   }{" "}
                   / day
@@ -146,15 +151,15 @@ export function ColonyPage() {
           <label>
             Scout
             <select
-              value={expeditionDwarf}
-              onChange={(event) => setExpeditionDwarf(event.target.value)}
+              value={expeditionColonist}
+              onChange={(event) => setExpeditionColonist(event.target.value)}
             >
-              {colony.dwarves.map((dwarf) => (
-                <option key={dwarf.id} value={dwarf.id} disabled={
-                  dwarf.status !== "idle" &&
-                  dwarf.status !== "working"
+              {colony.colonists.map((colonist) => (
+                <option key={colonist.id} value={colonist.id} disabled={
+                  colonist.status !== "idle" &&
+                  colonist.status !== "working"
                 }>
-                  {dwarf.name}
+                  {colonist.name}
                 </option>
               ))}
             </select>
@@ -190,19 +195,19 @@ export function ColonyPage() {
           <button
             disabled={
               expeditionPending ||
-                !colony.dwarves.some(
-               (dwarf) =>
-                dwarf.id === expeditionDwarf &&
-                  (dwarf.status === "idle" ||
-           dwarf.status === "working")
+                !colony.colonists.some(
+               (colonist) =>
+                colonist.id === expeditionColonist &&
+                  (colonist.status === "idle" ||
+           colonist.status === "working")
   )
 }
-            onClick={() => sendExpedition(expeditionDwarf, destination)}
+            onClick={() => sendExpedition(expeditionColonist, destination)}
           >
             {expeditionPending ? "Beyond the gate…" : "Send expedition"}
           </button>
           <p>
-            A result returns in one request. The selected dwarf is unavailable
+            A result returns in one request. The selected colonist is unavailable
             while travelling.
           </p>
 
