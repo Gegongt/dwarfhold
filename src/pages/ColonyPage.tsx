@@ -206,6 +206,13 @@ export function ColonyPage() {
             while travelling.
           </p>
 
+          {/* D5: Explain the expedition refresh policy. */}
+        <p>
+          Progress is saved automatically. Refreshing the browser cancels
+          ongoing expeditions without rewards and returns the traveller
+          to their previous assignment.
+        </p>
+
           {colony.lastRaid && (
             <div
               className={`raid-result ${
