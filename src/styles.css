@@ -29,3 +29,69 @@
 .tool-button:disabled {
     opacity: 0.5;
 }
+
+
+/* D7: Defense chance */
+.raid-chance {
+  margin: 12px 13px;
+  padding: 12px;
+  background: #241c14;
+  border: 1px solid #74552d;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.raid-chance span {
+  color: #cba66a;
+  font: 700 11px "Barlow Condensed", sans-serif;
+  letter-spacing: 0.1em;
+}
+
+.raid-chance strong {
+  color: #e8b25f;
+  font: 700 30px "Almendra", serif;
+}
+
+.raid-chance p {
+  color: #a28a6c;
+  font: 12px "Barlow Condensed", sans-serif;
+  margin: 0;
+}
+
+/* D7: Raid result */
+.raid-result {
+  margin: 12px 13px;
+  padding: 13px;
+  background: #241c14;
+  border: 1px solid #74552d;
+}
+
+.raid-result h3 {
+  font: 700 20px "Almendra", serif;
+  margin: 7px 0;
+}
+
+.raid-result p {
+  margin: 6px 0;
+  font: 12px "Barlow Condensed", sans-serif;
+  color: #c2ad8e;
+}
+
+.raid-victory {
+  border-color: #628454;
+}
+
+.raid-victory h3,
+.raid-result .raid-rewards {
+  color: #80b879;
+}
+
+.raid-defeat {
+  border-color: #9b593a;
+}
+
+.raid-defeat h3,
+.raid-result .raid-losses {
+  color: #d87f63;
+}
