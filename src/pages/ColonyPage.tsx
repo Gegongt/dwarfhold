@@ -4,6 +4,7 @@ import { Chronicle } from "../components/Chronicle";
 import { DwarfRoster } from "../components/DwarfRoster";
 import { jobLabel, production } from "../simulation";
 import { useColony } from "../state/ColonyContext";
+import { getDefenseChance } from "../raid";
 import type { ResourceKey } from "../types";
 
 export function ColonyPage() {
@@ -149,11 +150,10 @@ export function ColonyPage() {
               onChange={(event) => setExpeditionDwarf(event.target.value)}
             >
               {colony.dwarves.map((dwarf) => (
-                <option key={dwarf.id} value={dwarf.id}>
-                  disabled={
+                <option key={dwarf.id} value={dwarf.id} disabled={
                   dwarf.status !== "idle" &&
                   dwarf.status !== "working"
-                }
+                }>
                   {dwarf.name}
                 </option>
               ))}
@@ -169,8 +169,23 @@ export function ColonyPage() {
               <option value="crystal-cave">Crystal Cave</option>
               <option value="old-mine">The Old Mine</option>
               <option value="blocked-pass">Blocked Pass</option>
+              <option value="bombo-rift">Bombo Rift</option>
             </select>
           </label>
+
+          {destination === "bombo-rift" && (
+            <div className="raid-chance">
+              <span>⚔ STONEHOME DEFENSE</span>
+
+              <strong>
+                {getDefenseChance(colony.resources.weapons)}%
+              </strong>
+
+              <p>
+                {colony.resources.weapons} Weapons available
+              </p>
+            </div>
+          )}
 
           <button
             disabled={
@@ -190,6 +205,45 @@ export function ColonyPage() {
             A result returns in one request. The selected dwarf is unavailable
             while travelling.
           </p>
+
+          {colony.lastRaid && (
+            <div
+              className={`raid-result ${
+                colony.lastRaid.defended ? "raid-victory" : "raid-defeat"
+              }`}
+              role="status"
+            >
+              <small>LAST GOBLIN RAID</small>
+
+              <h3>
+                {colony.lastRaid.defended
+                  ? "⚔ Stonehome Victorious!"
+                  : "☠ Stonehome Plundered!"}
+              </h3>
+
+              <p>
+                Defense chance: {colony.lastRaid.defenseChance}%
+              </p>
+
+              {colony.lastRaid.defended ? (
+                <p className="raid-rewards">
+                  +{colony.lastRaid.gainedWood} Wood,
+                  +{colony.lastRaid.gainedStone} Stone,
+                  +{colony.lastRaid.gainedWeapons} Weapons
+                </p>
+              ) : (
+                <p className="raid-losses">
+                  -{colony.lastRaid.lostWood} Wood,
+                  -{colony.lastRaid.lostStone} Stone,
+                  -{colony.lastRaid.lostFood} Food
+                </p>
+              )}
+
+              <p>
+                Weapons consumed: {colony.lastRaid.usedWeapons}
+              </p>
+            </div>
+          )}
         </section>
 
         <Chronicle activities={activities} />

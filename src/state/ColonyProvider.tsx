@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { beginExpedition } from "../api";
 import { advanceDay, jobLabel } from "../simulation";
+import { resolveRaid } from "../raid";
 import type {
   Activity,
   ColonyState,
@@ -251,24 +252,41 @@ function craftWeapon(dwarfId: string) {
     try {
       const result = await beginExpedition(dwarf.id, destination);
 
-      setColony((current) => ({
-        ...current,
-        resources: Object.entries(result.rewards).reduce(
+      const raidRoll =
+        destination === "bombo-rift"
+          ? Math.random()
+          : null;
+
+      setColony((current) => {
+        // Apply normal expedition rewards.
+        const rewardedResources = Object.entries(result.rewards).reduce(
           (all, [key, amount]) => ({
             ...all,
             [key]: all[key as ResourceKey] + (amount ?? 0),
           }),
           current.resources,
-        ),
-        dwarves: current.dwarves.map((item) =>
-          item.id === dwarf.id
-            ? {
-                ...item,
-                status: item.assignment ? "working" : "idle",
-              }
-            : item,
-        ),
-      }));
+        );
+
+        // D7: Trigger a raid only after a successful Bombo Rift expedition.
+        const raid =
+          raidRoll !== null
+            ? resolveRaid(rewardedResources, raidRoll)
+            : null;
+
+        return {
+          ...current,
+          resources: raid ? raid.resources : rewardedResources,
+          lastRaid: raid ? raid.report : current.lastRaid,
+          dwarves: current.dwarves.map((item) =>
+            item.id === dwarf.id
+              ? {
+                  ...item,
+                  status: item.assignment ? "working" : "idle",
+                }
+              : item,
+          ),
+        };
+      });
       setActivities((current) =>
         [
           {

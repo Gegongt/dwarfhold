@@ -37,6 +37,7 @@ export interface ColonyState {
     resources: Resources; 
     dwarves: Dwarf[];
     foodShortage: boolean;
+    lastRaid?: RaidReport;
 }
 
 export interface ExpeditionResult {     
@@ -51,4 +52,18 @@ export interface Activity {
     day: number; 
     message: string; 
     tone?: "good" | "warning" 
+}
+
+export interface RaidReport {
+  defended: boolean;
+  defenseChance: number;
+  usedWeapons: number;
+
+  gainedWood: number;
+  gainedStone: number;
+  gainedWeapons: number;
+
+  lostWood: number;
+  lostStone: number;
+  lostFood: number;
 }
