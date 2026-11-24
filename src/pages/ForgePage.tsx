@@ -46,6 +46,12 @@ export function ForgePage() {
         </select>
 
         <p>Crafting completes on the next game day.</p>
+
+        {/* D5: Explain the crafting refresh policy. */}
+        <p>
+          Active crafting tasks are saved and continue after a browser
+          refresh without additional material costs.
+        </p>
       </section>
 
       <section className="panel forge">
