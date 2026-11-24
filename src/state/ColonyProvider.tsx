@@ -9,6 +9,7 @@ import type {
   ResourceKey,
 } from "../types";
 import { ColonyContext, type ColonyContextValue } from "./ColonyContext";
+import { loadColony, saveColony } from "../persistence";
 
 const initialState: ColonyState = {
   day: 12,
@@ -54,7 +55,8 @@ const initialState: ColonyState = {
 };
 
 export function ColonyProvider({ children }: { children: ReactNode }) {
-  const [colony, setColony] = useState(initialState);
+  // D5: Restore the saved colony when the game starts.
+  const [colony, setColony] = useState(() => loadColony(initialState));
   const [paused, setPaused] = useState(false);
   const [expeditionPending, setExpeditionPending] = useState(false);
   //D4: prevent multiple expeditions from being initiated simultaneously
@@ -77,6 +79,11 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
 
     return () => window.clearInterval(timer);
   }, [paused]);
+
+  // D5: Automatically save whenever the colony state changes.
+  useEffect(() => {
+    saveColony(colony);
+  }, [colony]);
 
   function assignDwarf(id: string, assignment: JobType) {
     // D3: Busy dwarves cannot change their assignment.
