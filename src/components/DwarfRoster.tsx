@@ -35,6 +35,8 @@ export function DwarfRoster({ dwarves, availableTools, onAssign, onEquip, onUneq
       <div className="dwarf-list">
         {dwarves.map((dwarf) => {
           const isAway = dwarf.status === "expedition";
+          // D3: Crafting dwarves are temporarily unavailable.
+          const isCrafting = dwarf.status === "crafting";
           const specialty = dwarf.specialty
             ? `Skilled in ${jobLabel(dwarf.specialty)}`
             : "Generalist";
@@ -57,7 +59,7 @@ export function DwarfRoster({ dwarves, availableTools, onAssign, onEquip, onUneq
 
                 <select
                   value={dwarf.assignment ?? ""}
-                  disabled={isAway}
+                  disabled={isAway || isCrafting}
                   onChange={(event) =>
                     onAssign(
                       dwarf.id,
@@ -84,6 +86,7 @@ export function DwarfRoster({ dwarves, availableTools, onAssign, onEquip, onUneq
                   type="button"
                   disabled={
                     isAway ||
+                    isCrafting ||
                     (!dwarf.equippedTool && availableTools < 1)
                   }
                   onClick={() =>

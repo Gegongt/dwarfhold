@@ -78,6 +78,18 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
   }, [paused]);
 
   function assignDwarf(id: string, assignment: JobType) {
+    // D3: Busy dwarves cannot change their assignment.
+const selectedDwarf = colony.dwarves.find(
+  (dwarf) => dwarf.id === id
+);
+
+if (
+  !selectedDwarf ||
+  selectedDwarf.status === "crafting" ||
+  selectedDwarf.status === "expedition"
+) {
+  return;
+}
     setColony((current) => ({
       ...current,
       dwarves: current.dwarves.map((dwarf) =>
@@ -113,6 +125,7 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
       !dwarf ||
       dwarf.equippedTool ||
       dwarf.status === "expedition" ||
+      dwarf.status === "crafting" ||
       current.resources.tools < 1
     ) {
       return current;
@@ -157,83 +170,60 @@ export function ColonyProvider({ children }: { children: ReactNode }) {
   });
 }
 
-  function craftTool() {
-    if (colony.resources.wood < 3 || colony.resources.stone < 2) {
-      setActivities((current) => [
-        {
-          id: crypto.randomUUID(),
-          day: colony.day,
-          message: "Not enough wood or stone to forge to tool.",
-          tone: "warning" as const,
-        },
-        ...current,
-      ].slice(0, 6)
+ // D3: Start crafting with an eligible dwarf.
+function startCrafting(
+  dwarfId: string,
+  item: "tools" | "weapons"
+) {
+  const woodCost = item === "tools" ? 3 : 4;
+  const stoneCost = item === "tools" ? 2 : 3;
+
+  setColony((current) => {
+    const dwarf = current.dwarves.find(
+      (item) => item.id === dwarfId
     );
-      return;
+
+    // D3: Invalid attempts must not change the state.
+    if (
+      !dwarf ||
+      (dwarf.status !== "idle" && dwarf.status !== "working") ||
+      current.resources.wood < woodCost ||
+      current.resources.stone < stoneCost
+    ) {
+      return current;
     }
 
-    setColony((current) => ({
+    return {
       ...current,
       resources: {
         ...current.resources,
-        wood: current.resources.wood - 3,
-        stone: current.resources.stone - 2,
-        tools: current.resources.tools + 1,
+        wood: current.resources.wood - woodCost,
+        stone: current.resources.stone - stoneCost,
       },
-    }));
-    setActivities((current) =>
-      [
-        {
-          id: crypto.randomUUID(),
-          day: colony.day,
-          message: "A sturdy iron tool joins the stores.",
-          tone: "good" as const,
-        },
-        ...current,
-      ].slice(0, 6),
-    );
-  }
+      dwarves: current.dwarves.map((dwarf) =>
+        dwarf.id === dwarfId
+          ? {
+              ...dwarf,
+              status: "crafting",
+              crafting: {
+                item,
+                completesOnDay: current.day + 1,
+              },
+            }
+          : dwarf
+      ),
+    };
+  });
+}
 
-// D2: Weapon recipe costs 4 wood and 3 stone.
-  function craftWeapon() {
-    if (colony.resources.wood < 4 || colony.resources.stone < 3) {
-      setActivities((current) =>
-        [
-          {
-            id: crypto.randomUUID(),
-            day: colony.day,
-            message: "Not enough wood or stone to forge a weapon.",
-            tone: "warning" as const,
-          },
-          ...current,
-        ].slice(0, 6),
-      );
-      return;
-    }
+function craftTool(dwarfId: string) {
+  startCrafting(dwarfId, "tools");
+}
 
-    setColony((current) => ({
-      ...current,
-      resources: {
-        ...current.resources,
-        wood: current.resources.wood - 4,
-        stone: current.resources.stone - 3,
-        weapons: current.resources.weapons + 1,
-      },
-    }));
-
-    setActivities((current) =>
-      [
-        {
-          id: crypto.randomUUID(),
-          day: colony.day,
-          message: "A weapon was forged for Stonehome's defense.",
-          tone: "good" as const,
-        },
-        ...current,
-      ].slice(0, 6),
-    );
-  }
-
+function craftWeapon(dwarfId: string) {
+  startCrafting(dwarfId, "weapons");
+}
+  
   async function sendExpedition(dwarfId: string, destination: string) {
     //D4: prevent multiple expeditions from being initiated simultaneously
     if (expeditionLock.current) return;
