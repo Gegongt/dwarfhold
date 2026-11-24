@@ -7,32 +7,37 @@ export const production: Record<Exclude<JobType, null>, Partial<Resources>> = {
 export function advanceDay(state: ColonyState): ColonyState {
   const resources = { ...state.resources };
 
-  state.dwarves.forEach((dwarf) => {
-    if (dwarf.status !== "working") return;
-    if (!dwarf.assignment) return;
+  state.colonists.forEach((colonist) => {
+    if (colonist.status !== "working") return;
+    if (!colonist.assignment) return;
 
-    const output = production[dwarf.assignment];
+    const output = production[colonist.assignment];
 
     Object.entries(output).forEach(([resource, amount]) => {
       let produced = amount ?? 0;
       
       // D1: Reduce production during food shortage.
-      if (state.foodShortage && dwarf.assignment !== "farming"){
+      if (state.foodShortage && colonist.assignment !== "farming"){
         produced = Math.floor(produced / 2);
       }
       
+      // D6: Ghouls produce 2 additional food when farming.
+      if (colonist.species === "ghoul" && colonist.assignment === "farming") {
+        produced += 2;
+      }
+
       // D2: Equipped tools add one extra resource
       // when the dwarf performs a local job.
       const bonus =
-        dwarf.equippedTool && dwarf.status === "working" ? 1 : 0;
+        colonist.equippedTool && colonist.status === "working" ? 1 : 0;
 
       resources[resource as keyof Resources] += produced + bonus;
     });
 
   });
 
-  const requiredFood = state.dwarves.filter(
-    (dwarf) => dwarf.status === "working"
+  const requiredFood = state.colonists.filter(
+    (colonist) => colonist.status === "working"
   ).length;
   const foodShortage = resources.food < requiredFood;
 
@@ -41,25 +46,25 @@ export function advanceDay(state: ColonyState): ColonyState {
   // D3: Complete crafting tasks when the next day is reached.
 const nextDay = state.day + 1;
 
-const dwarves = state.dwarves.map((dwarf) => {
+const colonists = state.colonists.map((colonist) => {
   if (
-    dwarf.status === "crafting" &&
-    dwarf.crafting &&
-    nextDay >= dwarf.crafting.completesOnDay
+    colonist.status === "crafting" &&
+    colonist.crafting &&
+    nextDay >= colonist.crafting.completesOnDay
   ) {
-    resources[dwarf.crafting.item] += 1;
+    resources[colonist.crafting.item] += 1;
 
     return {
-      ...dwarf,
-      status: dwarf.assignment ? "working" as const : "idle" as const,
+      ...colonist,
+      status: colonist.assignment ? "working" as const : "idle" as const,
       crafting: undefined,
     };
   }
 
-  return dwarf;
+  return colonist;
 });
 
-return { ...state, day: nextDay, resources, dwarves, foodShortage };
+return { ...state, day: nextDay, resources, colonists, foodShortage };
 }
 
 export const jobLabel = (job: JobType) => job ? ({ 

@@ -7,18 +7,22 @@ export function ForgePage() {
   const { colony, activities, craftTool, craftWeapon } = useColony();
 
   // D3: Select a dwarf for crafting.
-  const [selectedDwarf, setSelectedDwarf] = useState("");
+  const [selectedColonist, setSelectedColonist] = useState("");
 
-  const availableDwarves = colony.dwarves.filter(
-    (dwarf) => dwarf.status === "idle" || dwarf.status === "working"
+  const availableColonists = colony.colonists.filter(
+    (colonist) => colonist.status === "idle" || colonist.status === "working"
   );
 
-  const craftingDwarves = colony.dwarves.filter(
-    (dwarf) => dwarf.status === "crafting"
+  const craftingColonists = colony.colonists.filter(
+    (colonist) => colonist.status === "crafting"
   );
 
-  const canCraft = availableDwarves.some(
-    (dwarf) => dwarf.id === selectedDwarf
+  const canCraft = availableColonists.some(
+    (colonist) => colonist.id === selectedColonist
+  );
+
+  const selectedCrafter = colony.colonists.find(
+    (colonist) => colonist.id === selectedColonist
   );
 
   return (
@@ -29,14 +33,14 @@ export function ForgePage() {
         <h2>Select a crafter</h2>
 
         <select
-          value={canCraft ? selectedDwarf : ""}
-          onChange={(event) => setSelectedDwarf(event.target.value)}
+          value={canCraft ? selectedColonist : ""}
+          onChange={(event) => setSelectedColonist(event.target.value)}
         >
-          <option value="">Select a dwarf</option>
+          <option value="">Select a colonist</option>
 
-          {availableDwarves.map((dwarf) => (
-            <option key={dwarf.id} value={dwarf.id}>
-              {dwarf.name}
+          {availableColonists.map((colonist) => (
+            <option key={colonist.id} value={colonist.id}>
+              {colonist.name}
             </option>
           ))}
         </select>
@@ -64,7 +68,7 @@ export function ForgePage() {
               colony.resources.wood < 3 ||
               colony.resources.stone < 2
             }
-            onClick={() => craftTool(selectedDwarf)}
+            onClick={() => craftTool(selectedColonist)}
           >
             Forge tool
           </button>
@@ -90,30 +94,34 @@ export function ForgePage() {
             <button
               disabled={
                 !canCraft ||
+                selectedCrafter?.species === "ghoul" ||
                 colony.resources.wood < 4 ||
                 colony.resources.stone < 3
               }
-              onClick={() => craftWeapon(selectedDwarf)}
+              onClick={() => craftWeapon(selectedColonist)}
             >
               Forge weapon
             </button>
           </div>
         </section>
+        {selectedCrafter?.species === "ghoul" && (
+          <p>Ghouls cannot craft weapons, but they can craft tools.</p>
+        )}
       </div>
 
       {/* D3: Show active crafting tasks */}
       <section className="panel">
         <h2>Active Crafting</h2>
 
-        {craftingDwarves.length === 0 && (
+        {craftingColonists.length === 0 && (
           <p>No active crafting tasks.</p>
         )}
 
-        {craftingDwarves.map((dwarf) => (
-          <p key={dwarf.id}>
-            {dwarf.name} is crafting a{" "}
-            {dwarf.crafting?.item === "tools" ? "tool" : "weapon"}.
-            Completes on day {dwarf.crafting?.completesOnDay}.
+        {craftingColonists.map((colonist) => (
+          <p key={colonist.id}>
+            {colonist.name} is crafting a{" "}
+            {colonist.crafting?.item === "tools" ? "tool" : "weapon"}.
+            Completes on day {colonist.crafting?.completesOnDay}.
           </p>
         ))}
       </section>

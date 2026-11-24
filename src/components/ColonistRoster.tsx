@@ -1,5 +1,5 @@
 import { jobLabel } from "../simulation";
-import type { Dwarf, JobType } from "../types";
+import type { Colonist, JobType } from "../types";
 
 const jobs: Exclude<JobType, null>[] = [
   "woodcutting",
@@ -8,16 +8,16 @@ const jobs: Exclude<JobType, null>[] = [
 ];
 
 interface Props {
-  dwarves: Dwarf[];
+  colonists: Colonist[];
   availableTools: number;
   onAssign: (id: string, job: JobType) => void;
   onEquip: (id: string) => void;
   onUnequip: (id: string) => void;
 }
 
-export function DwarfRoster({ dwarves, availableTools, onAssign, onEquip, onUnequip }: Props) {
-  const presentDwarves = dwarves.filter(
-    (dwarf) => dwarf.status !== "expedition",
+export function ColonistRoster({ colonists, availableTools, onAssign, onEquip, onUnequip }: Props) {
+  const presentColonists = colonists.filter(
+    (colonist) => colonist.status !== "expedition",
   ).length;
 
   return (
@@ -28,41 +28,47 @@ export function DwarfRoster({ dwarves, availableTools, onAssign, onEquip, onUneq
           <h2>Holdfolk</h2>
         </div>
         <span>
-          {presentDwarves} / {dwarves.length} present
+          {presentColonists} / {colonists.length} present
         </span>
       </header>
 
       <div className="dwarf-list">
-        {dwarves.map((dwarf) => {
-          const isAway = dwarf.status === "expedition";
+        {colonists.map((colonist) => {
+          const isAway = colonist.status === "expedition";
           // D3: Crafting dwarves are temporarily unavailable.
-          const isCrafting = dwarf.status === "crafting";
-          const specialty = dwarf.specialty
-            ? `Skilled in ${jobLabel(dwarf.specialty)}`
+          const isCrafting = colonist.status === "crafting";
+          const specialty = colonist.specialty
+            ? `Skilled in ${jobLabel(colonist.specialty)}`
             : "Generalist";
 
           return (
             <article
               className={isAway ? "dwarf away" : "dwarf"}
-              key={dwarf.id}
+              key={colonist.id}
             >
               <div className="portrait">
-                {dwarf.icon}
-                <i className={dwarf.status} />
+                {colonist.icon}
+                <i className={colonist.status} />
               </div>
 
               <div className="dwarf-details">
-                <h3>{dwarf.name}</h3>
+                <h3>{colonist.name}</h3>
                 <p>
-                  {dwarf.title} · {specialty}
+                  {colonist.title} · {specialty}
                 </p>
 
+                {colonist.species === "ghoul" && (
+                  <p>
+                    🍄 Farming: +2 Food/day · Cannot craft weapons
+                  </p>
+                )}
+
                 <select
-                  value={dwarf.assignment ?? ""}
+                  value={colonist.assignment ?? ""}
                   disabled={isAway || isCrafting}
                   onChange={(event) =>
                     onAssign(
-                      dwarf.id,
+                      colonist.id,
                       (event.target.value || null) as JobType,
                     )
                   }
@@ -77,7 +83,7 @@ export function DwarfRoster({ dwarves, availableTools, onAssign, onEquip, onUneq
 
                 {/* D2: Show equipment ownership */}
                 <p>
-                  Tool: {dwarf.equippedTool ? "⚒️ Equipped" : "None"}
+                  Tool: {colonist.equippedTool ? "⚒️ Equipped" : "None"}
                 </p>
 
                 {/* D2: Equip or return a tool */}
@@ -87,19 +93,19 @@ export function DwarfRoster({ dwarves, availableTools, onAssign, onEquip, onUneq
                   disabled={
                     isAway ||
                     isCrafting ||
-                    (!dwarf.equippedTool && availableTools < 1)
+                    (!colonist.equippedTool && availableTools < 1)
                   }
                   onClick={() =>
-                    dwarf.equippedTool
-                      ? onUnequip(dwarf.id)
-                      : onEquip(dwarf.id)
+                    colonist.equippedTool
+                      ? onUnequip(colonist.id)
+                      : onEquip(colonist.id)
                   }
                 >
-                  {dwarf.equippedTool ? "Return Tool" : "Equip Tool"}
+                  {colonist.equippedTool ? "Return Tool" : "Equip Tool"}
                 </button>
               </div>
 
-              <span className="status">{dwarf.status}</span>
+              <span className="status">{colonist.status}</span>
             </article>
           );
         })}
