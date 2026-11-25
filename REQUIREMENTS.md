@@ -55,3 +55,22 @@ In addition to the functional requirements, your team must define a small set of
 Document the selected goals, why they matter, and the decisions or trade-offs you made to support them. You should also consider how you can evaluate whether your solution meets those goals.
 
 There is no single required architecture, or design pattern. During the exam, team members must be able to explain and defend the chosen non functionals, and discuss the resulting engineering decisions.
+
+# Our Non-Functional Requirements
+
+## Q1 – Reliability
+- Goal/Why: Game actions should not cause duplicate rewards or invalid colony states.
+- Decision/Trade-off: Use React state updates and an expedition lock instead of a more complex system.
+- Evaluation: Test repeated expedition clicks, failed expeditions and invalid crafting attempts.
+## Q2 – Maintainability
+- Goal/Why: The code should be easy to understand and extend.
+- Decision/Trade-off: Use TypeScript, a shared Colonist type and separate simulation/persistence logic; keep the overall architecture simple.
+- Evaluation: Check that new species work with existing features and run the build/tests.
+## Q3 – Usability
+- Goal/Why: Players should understand the colony state and available actions.
+- Decision/Trade-off: Show resources, crafting times and restrictions directly in the UI instead of adding complex visuals.
+- Evaluation: Check whether crafting, expedition and Ghoul information is clear during manual testing.
+## Q4 – Persistence
+- Goal/Why: Colony progress should survive a browser refresh without crashes.
+- Decision/Trade-off: Use validated, versioned localStorage saves instead of a database; saves remain limited to one browser.
+- Evaluation: Refresh during crafting/expeditions and test corrupted save data.
