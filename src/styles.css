@@ -95,3 +95,20 @@
 .raid-result .raid-losses {
   color: #d87f63;
 }
+
+.forge-padding {
+  padding: 16px;
+}
+
+.forge-select {
+  background: #1b1510;
+  color: #f2e2c4;
+  border: 1px solid #7a5a2f;
+  padding: 8px 12px;
+  font: inherit;
+}
+
+.ghoul-message {
+  margin-left: 16px;
+  color: #dac50f;
+}

@@ -3,7 +3,7 @@ import { advanceDay } from "./simulation";
 import type { ColonyState } from "./types";
 describe("colony simulation", () => {
   it("produces assigned resources and feeds the company", () => {
-    const state: ColonyState = { day: 1, resources: { wood: 0, stone: 0, food: 5, tools: 0, weapons: 0 }, dwarves: [{ id: "d1", name: "Brom", title: "", icon: "", assignment: "woodcutting", status: "working" }], foodShortage: false };
+    const state: ColonyState = { day: 1, resources: { wood: 0, stone: 0, food: 5, tools: 0, weapons: 0 }, colonists: [{ id: "d1", name: "Brom", title: "", icon: "", species: "dwarf", assignment: "woodcutting", status: "working" }], foodShortage: false };
     expect(advanceDay(state)).toMatchObject({ day: 2, resources: { wood: 3, food: 4 } });
     expect(state.resources.wood).toBe(0);
   });
@@ -20,12 +20,13 @@ describe("colony simulation", () => {
         tools: 0,
         weapons: 0,
       },
-      dwarves: [
+      colonists: [
         {
           id: "d1",
           name: "Brom",
           title: "",
           icon: "",
+          species: "dwarf",
           assignment: null,
           status: "crafting",
           crafting: {
@@ -40,8 +41,8 @@ describe("colony simulation", () => {
     const result = advanceDay(state);
 
     expect(result.resources.tools).toBe(1);
-    expect(result.dwarves[0].status).toBe("idle");
-    expect(result.dwarves[0].crafting).toBeUndefined();
+    expect(result.colonists[0].status).toBe("idle");
+    expect(result.colonists[0].crafting).toBeUndefined();
     expect(state.resources.tools).toBe(0);
   });
 
@@ -56,12 +57,13 @@ describe("colony simulation", () => {
         tools: 0,
         weapons: 0,
       },
-      dwarves: [
+      colonists: [
         {
           id: "d1",
           name: "Brom",
           title: "",
           icon: "",
+          species: "dwarf",
           assignment: null,
           status: "crafting",
           crafting: {
@@ -76,12 +78,12 @@ describe("colony simulation", () => {
     const result = advanceDay(state);
 
     expect(result.resources.weapons).toBe(0);
-    expect(result.dwarves[0].status).toBe("crafting");
+    expect(result.colonists[0].status).toBe("crafting");
 
     const completed = advanceDay(result);
 
     expect(completed.resources.weapons).toBe(1);
-    expect(completed.dwarves[0].status).toBe("idle");
+    expect(completed.colonists[0].status).toBe("idle");
   });
 
   // D3: Crafting prevents normal production.
@@ -95,12 +97,13 @@ describe("colony simulation", () => {
         tools: 0,
         weapons: 0,
       },
-      dwarves: [
+      colonists: [
         {
           id: "d1",
           name: "Brom",
           title: "",
           icon: "",
+          species: "dwarf",
           assignment: "mining",
           status: "crafting",
           equippedTool: true,
@@ -117,8 +120,8 @@ describe("colony simulation", () => {
 
     expect(result.resources.stone).toBe(0);
     expect(result.resources.weapons).toBe(1);
-    expect(result.dwarves[0].status).toBe("working");
-    expect(result.dwarves[0].assignment).toBe("mining");
+    expect(result.colonists[0].status).toBe("working");
+    expect(result.colonists[0].assignment).toBe("mining");
 
     const nextDay = advanceDay(result);
 

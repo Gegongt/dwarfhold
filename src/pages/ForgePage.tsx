@@ -29,10 +29,11 @@ export function ForgePage() {
     <div className="forge-layout">
 
       {/* D3: Select an available dwarf */}
-      <section className="panel">
+      <section className="panel forge-padding">
         <h2>Select a crafter</h2>
 
         <select
+          className="forge-select"
           value={canCraft ? selectedColonist : ""}
           onChange={(event) => setSelectedColonist(event.target.value)}
         >
@@ -111,12 +112,12 @@ export function ForgePage() {
           </div>
         </section>
         {selectedCrafter?.species === "ghoul" && (
-          <p>Ghouls cannot craft weapons, but they can craft tools.</p>
+          <p className="ghoul-message">Ghouls cannot craft weapons, but they can craft tools.</p>
         )}
       </div>
 
       {/* D3: Show active crafting tasks */}
-      <section className="panel">
+      <section className="panel forge-padding">
         <h2>Active Crafting</h2>
 
         {craftingColonists.length === 0 && (
